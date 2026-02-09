@@ -761,46 +761,48 @@ const QRCodeRg6m = () => {
           ) : recentRegistrations.length > 0 ? (
             <>
               {isMobile ? (
-                <div className="space-y-3 px-1">
+                <div className="space-y-2">
                   {recentRegistrations.map((registration) => (
                     <div
                       key={registration.id}
-                      className="rounded-lg border border-border bg-card p-3 space-y-3"
+                      className="w-full text-left rounded-md border border-border bg-card px-3 py-2"
                     >
-                      {/* Foto + QR Code */}
-                      <div className="flex gap-3 justify-center">
-                        {registration.photo_path ? (
+                      <div className="flex items-start gap-3">
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {registration.photo_path ? (
+                            <img
+                              src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
+                              alt="Foto"
+                              className="w-10 h-12 object-cover rounded"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-10 h-12 bg-muted rounded flex items-center justify-center">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
                           <img
-                            src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
-                            alt="Foto"
-                            className="w-24 h-28 object-cover rounded-md border"
+                            src={registration.qr_code_path
+                              ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
+                              : `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
+                            }
+                            alt="QR"
+                            className="w-12 h-12 rounded"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
-                        ) : (
-                          <div className="w-24 h-28 bg-muted rounded-md flex items-center justify-center border">
-                            <User className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <img
-                          src={registration.qr_code_path
-                            ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
-                            : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
-                          }
-                          alt="QR"
-                          className="w-28 h-28 rounded-md border"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      </div>
-                      {/* Info */}
-                      <div className="text-center">
-                        <div className="font-semibold text-sm">{registration.full_name}</div>
-                        <div className="font-mono text-xs text-muted-foreground">{registration.document_number}</div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-muted-foreground">
-                          {formatFullDate(registration.created_at)}
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm truncate">
+                            {registration.full_name}
+                          </div>
+                          <div className="font-mono text-xs text-muted-foreground truncate">
+                            {registration.document_number}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {formatFullDate(registration.created_at)}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
                           <Badge
                             variant={registration.validation === 'verified' ? 'secondary' : 'outline'}
                             className={
@@ -820,73 +822,79 @@ const QRCodeRg6m = () => {
                   ))}
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Foto</TableHead>
-                        <TableHead>QR Code</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Documento</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Validade</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentRegistrations.map((registration) => (
-                        <TableRow key={registration.id}>
-                          <TableCell className="py-3">
-                            {registration.photo_path ? (
-                              <img
-                                src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
-                                alt="Foto"
-                                className="w-20 h-24 object-cover rounded-md border"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                              />
-                            ) : (
-                              <div className="w-20 h-24 bg-muted rounded-md flex items-center justify-center border">
-                                <User className="h-6 w-6 text-muted-foreground" />
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="py-3">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-14">Foto</TableHead>
+                      <TableHead className="w-16">QR Code</TableHead>
+                      <TableHead className="min-w-[200px]">Nome</TableHead>
+                      <TableHead className="w-40">Documento</TableHead>
+                      <TableHead className="min-w-[150px]">Data</TableHead>
+                      <TableHead className="w-28">Validade</TableHead>
+                      <TableHead className="w-28 text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentRegistrations.map((registration) => (
+                      <TableRow key={registration.id}>
+                        <TableCell>
+                          {registration.photo_path ? (
                             <img
-                              src={registration.qr_code_path 
-                                ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
-                                : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
-                              }
-                              alt="QR"
-                              className="w-24 h-24 rounded-md border"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
+                              alt="Foto"
+                              className="w-12 h-14 object-cover rounded"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
                             />
-                          </TableCell>
-                          <TableCell className="font-medium text-sm">{registration.full_name}</TableCell>
-                          <TableCell className="font-mono text-xs">{registration.document_number}</TableCell>
-                          <TableCell className="text-xs">{formatFullDate(registration.created_at)}</TableCell>
-                          <TableCell className="text-xs">
-                            <span className={registration.is_expired ? 'text-red-500 font-medium' : ''}>
-                              {formatDate(registration.expiry_date)}
-                              {registration.is_expired && ' (Exp.)'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge
-                              variant={registration.validation === 'verified' ? 'secondary' : 'outline'}
-                              className={
-                                registration.validation === 'verified'
-                                  ? 'text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                              }
-                            >
-                              {registration.validation === 'verified' ? 'Verificado' : 'Pendente'}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                          ) : (
+                            <div className="w-12 h-14 bg-muted rounded flex items-center justify-center">
+                              <User className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <img
+                            src={registration.qr_code_path 
+                              ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
+                              : `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
+                            }
+                            alt="QR"
+                            className="w-14 h-14 rounded"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-sm">
+                          {registration.full_name}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {registration.document_number}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {formatFullDate(registration.created_at)}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <span className={registration.is_expired ? 'text-red-500 font-medium' : ''}>
+                            {formatDate(registration.expiry_date)}
+                            {registration.is_expired && ' (Exp.)'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            variant={registration.validation === 'verified' ? 'secondary' : 'outline'}
+                            className={
+                              registration.validation === 'verified'
+                                ? 'text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            }
+                          >
+                            {registration.validation === 'verified' ? 'Verificado' : 'Pendente'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </>
           ) : (
