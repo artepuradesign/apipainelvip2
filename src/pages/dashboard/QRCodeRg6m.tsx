@@ -779,7 +779,8 @@ const QRCodeRg6m = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">Foto</TableHead>
+                      <TableHead className="w-14">Foto</TableHead>
+                      <TableHead className="w-16">QR Code</TableHead>
                       <TableHead className="min-w-[200px]">Nome</TableHead>
                       <TableHead className="w-40">Documento</TableHead>
                       <TableHead className="min-w-[150px]">Data</TableHead>
@@ -795,16 +796,27 @@ const QRCodeRg6m = () => {
                             <img
                               src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
                               alt="Foto"
-                              className="w-10 h-10 object-cover rounded"
+                              className="w-12 h-14 object-cover rounded"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                              <User className="h-5 w-5 text-gray-400" />
+                            <div className="w-12 h-14 bg-muted rounded flex items-center justify-center">
+                              <User className="h-5 w-5 text-muted-foreground" />
                             </div>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <img
+                            src={registration.qr_code_path 
+                              ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
+                              : `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
+                            }
+                            alt="QR"
+                            className="w-14 h-14 rounded"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
                         </TableCell>
                         <TableCell className="font-medium text-sm">
                           {registration.full_name}
