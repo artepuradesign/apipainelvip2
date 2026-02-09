@@ -142,6 +142,7 @@ import PublicPlanos from '@/pages/PublicPlanos';
 import PublicPlanPayment from '@/pages/PublicPlanPayment';
 import PhotoDebugger from '@/components/debug/PhotoDebugger';
 import QRCodeRg6m from '@/pages/dashboard/QRCodeRg6m';
+import QRCodeRg6mTodos from '@/pages/dashboard/QRCodeRg6mTodos';
 
 
 // Create a client
