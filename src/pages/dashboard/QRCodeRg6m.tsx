@@ -311,6 +311,10 @@ const QRCodeRg6m = () => {
       formDataToSend.append('parent1', formData.pai.toUpperCase().trim());
       formDataToSend.append('parent2', formData.mae.toUpperCase().trim());
       
+      if (user?.id) {
+        formDataToSend.append('id_user', user.id);
+      }
+      
       if (formData.foto) {
         formDataToSend.append('photo', formData.foto);
       }
@@ -740,7 +744,30 @@ const QRCodeRg6m = () => {
                       key={registration.id}
                       className="w-full text-left rounded-md border border-border bg-card px-3 py-2"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {registration.photo_path ? (
+                            <img
+                              src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
+                              alt="Foto"
+                              className="w-10 h-12 object-cover rounded"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-10 h-12 bg-muted rounded flex items-center justify-center">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <img
+                            src={registration.qr_code_path
+                              ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
+                              : `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
+                            }
+                            alt="QR"
+                            className="w-12 h-12 rounded"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-sm truncate">
                             {registration.full_name}
@@ -775,7 +802,8 @@ const QRCodeRg6m = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">Foto</TableHead>
+                      <TableHead className="w-14">Foto</TableHead>
+                      <TableHead className="w-16">QR Code</TableHead>
                       <TableHead className="min-w-[200px]">Nome</TableHead>
                       <TableHead className="w-40">Documento</TableHead>
                       <TableHead className="min-w-[150px]">Data</TableHead>
@@ -791,16 +819,27 @@ const QRCodeRg6m = () => {
                             <img
                               src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
                               alt="Foto"
-                              className="w-10 h-10 object-cover rounded"
+                              className="w-12 h-14 object-cover rounded"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                              <User className="h-5 w-5 text-gray-400" />
+                            <div className="w-12 h-14 bg-muted rounded flex items-center justify-center">
+                              <User className="h-5 w-5 text-muted-foreground" />
                             </div>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <img
+                            src={registration.qr_code_path 
+                              ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
+                              : `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
+                            }
+                            alt="QR"
+                            className="w-14 h-14 rounded"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
                         </TableCell>
                         <TableCell className="font-medium text-sm">
                           {registration.full_name}

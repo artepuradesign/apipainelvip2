@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { ArrowLeft, Loader2, User, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ArrowLeft, Loader2, User, ChevronLeft, ChevronRight, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SimpleTitleBar from '@/components/dashboard/SimpleTitleBar';
 import ScrollToTop from '@/components/ui/scroll-to-top';
@@ -42,6 +44,15 @@ const formatFullDate = (dateStr: string) => {
   return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 };
 
+const getQrCodeUrl = (reg: RegistroData) => {
+  if (reg.qr_code_path) {
+    return `${PHP_VALIDATION_BASE}/${reg.qr_code_path}`;
+  }
+  // Fallback: gerar via API externa
+  const viewUrl = `https://qr.atito.com.br/qrvalidation/?token=${encodeURIComponent(reg.token)}&ref=${encodeURIComponent(reg.token)}&cod=${encodeURIComponent(reg.token)}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(viewUrl)}`;
+};
+
 const QRCodeRg6mTodos = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -50,6 +61,8 @@ const QRCodeRg6mTodos = () => {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteToken, setDeleteToken] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
@@ -78,6 +91,31 @@ const QRCodeRg6mTodos = () => {
     loadRegistrations(currentPage);
   }, [currentPage, loadRegistrations]);
 
+  const handleDelete = async () => {
+    if (!deleteToken) return;
+    setDeleting(true);
+    try {
+      const formData = new FormData();
+      formData.append('token', deleteToken);
+      const response = await fetch(`${PHP_VALIDATION_BASE}/delete_user.php`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (response.ok) {
+        toast.success('Cadastro excluído com sucesso');
+        await loadRegistrations(currentPage);
+      } else {
+        toast.error('Erro ao excluir cadastro');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+      toast.error('Erro ao excluir cadastro');
+    } finally {
+      setDeleting(false);
+      setDeleteToken(null);
+    }
+  };
+
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -104,7 +142,7 @@ const QRCodeRg6mTodos = () => {
       <ScrollToTop />
       <SimpleTitleBar title="Todos os Cadastros - QR Code RG" onBack={() => navigate('/dashboard/qrcode-rg-6m')} />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/qrcode-rg-6m')}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
         </Button>
@@ -116,6 +154,27 @@ const QRCodeRg6mTodos = () => {
         </span>
       </div>
 
+      {/* Modal de confirmação de exclusão */}
+      <Dialog open={!!deleteToken} onOpenChange={(open) => !open && setDeleteToken(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este cadastro? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteToken(null)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card className="w-full">
         <CardContent className="p-0 sm:p-2">
           {loading ? (
@@ -126,139 +185,174 @@ const QRCodeRg6mTodos = () => {
           ) : registrations.length > 0 ? (
             <>
               {isMobile ? (
-                <div className="space-y-2 p-2">
+                <div className="space-y-3 p-2">
                   {registrations.map((reg) => (
-                    <div key={reg.id} className="rounded-md border border-border bg-card p-3 space-y-2">
-                      <div className="flex items-start gap-3">
-                        {reg.photo_path ? (
+                    <div key={reg.id} className="rounded-lg border border-border bg-card p-3 space-y-3">
+                      {/* Foto + QR Code lado a lado */}
+                      <div className="flex gap-3 items-start">
+                        <div className="flex gap-2 flex-shrink-0">
+                          {reg.photo_path ? (
+                            <img
+                              src={`${PHP_VALIDATION_BASE}/${reg.photo_path}`}
+                              alt="Foto"
+                              className="w-20 h-24 object-cover rounded"
+                              onError={(e) => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-20 h-24 bg-muted rounded flex items-center justify-center">
+                              <User className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
                           <img
-                            src={`${PHP_VALIDATION_BASE}/${reg.photo_path}`}
-                            alt="Foto"
-                            className="w-14 h-14 object-cover rounded flex-shrink-0"
+                            src={getQrCodeUrl(reg)}
+                            alt="QR Code"
+                            className="w-24 h-24 rounded"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
-                        ) : (
-                          <div className="w-14 h-14 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                            <User className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-sm truncate">{reg.full_name}</div>
-                          <div className="font-mono text-xs text-muted-foreground">{reg.document_number}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5">{formatFullDate(reg.created_at)}</div>
                         </div>
-                        <Badge
-                          variant={reg.validation === 'verified' ? 'secondary' : 'outline'}
-                          className={
-                            reg.validation === 'verified'
-                              ? 'text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                          }
-                        >
-                          {reg.validation === 'verified' ? 'Verificado' : 'Pendente'}
-                        </Badge>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm">{reg.full_name}</div>
+                          <div className="font-mono text-xs text-muted-foreground">{reg.document_number}</div>
+                          <Badge
+                            variant={reg.validation === 'verified' ? 'secondary' : 'outline'}
+                            className={`mt-1 ${
+                              reg.validation === 'verified'
+                                ? 'text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            }`}
+                          >
+                            {reg.validation === 'verified' ? 'Verificado' : 'Pendente'}
+                          </Badge>
+                          {reg.is_expired && (
+                            <span className="text-[10px] text-red-500 font-medium ml-1">Expirado</span>
+                          )}
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
                         <div><span className="font-medium">Nasc:</span> {formatDate(reg.birth_date)}</div>
-                        <div><span className="font-medium">Validade:</span> <span className={reg.is_expired ? 'text-red-500 font-medium' : ''}>{formatDate(reg.expiry_date)} {reg.is_expired && '(Exp.)'}</span></div>
+                        <div><span className="font-medium">Cadastro:</span> {formatFullDate(reg.created_at)}</div>
+                        <div><span className="font-medium">Validade:</span> <span className={reg.is_expired ? 'text-red-500 font-medium' : ''}>{formatDate(reg.expiry_date)}</span></div>
+                        <div><span className="font-medium">Token:</span> {reg.token.substring(0, 10)}...</div>
                         <div><span className="font-medium">Pai:</span> {reg.parent1 || '-'}</div>
                         <div><span className="font-medium">Mãe:</span> {reg.parent2 || '-'}</div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 pt-1 border-t border-border">
                         <a
                           href={`https://qr.atito.com.br/qrvalidation/?token=${reg.token}&ref=${reg.token}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-primary underline"
+                          className="text-xs text-primary underline flex items-center gap-1"
                         >
-                          Visualizar QR
+                          <ExternalLink className="h-3 w-3" /> Visualizar
                         </a>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="ml-auto h-7 text-xs"
+                          onClick={() => setDeleteToken(reg.token)}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                        </Button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">Foto</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead className="w-36">Documento</TableHead>
-                      <TableHead className="w-28">Nascimento</TableHead>
-                      <TableHead>Pai</TableHead>
-                      <TableHead>Mãe</TableHead>
-                      <TableHead className="w-40">Cadastro</TableHead>
-                      <TableHead className="w-28">Validade</TableHead>
-                      <TableHead className="w-24 text-center">Status</TableHead>
-                      <TableHead className="w-24 text-center">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {registrations.map((reg) => (
-                      <TableRow key={reg.id}>
-                        <TableCell>
-                          {reg.photo_path ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[150px]">Foto</TableHead>
+                        <TableHead className="w-[200px]">QR Code</TableHead>
+                        <TableHead className="w-[100px]">Token</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead className="w-[130px]">Documento</TableHead>
+                        <TableHead className="w-[130px]">Cadastro</TableHead>
+                        <TableHead className="w-[100px]">Validade</TableHead>
+                        <TableHead className="w-[100px] text-center">Validação</TableHead>
+                        <TableHead className="w-[140px] text-center">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {registrations.map((reg) => (
+                        <TableRow key={reg.id}>
+                          <TableCell>
+                            {reg.photo_path ? (
+                              <img
+                                src={`${PHP_VALIDATION_BASE}/${reg.photo_path}`}
+                                alt="Foto"
+                                className="w-[120px] h-[150px] object-cover rounded"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="w-[120px] h-[150px] bg-muted rounded flex items-center justify-center">
+                                <User className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <img
-                              src={`${PHP_VALIDATION_BASE}/${reg.photo_path}`}
-                              alt="Foto"
-                              className="w-12 h-12 object-cover rounded"
+                              src={getQrCodeUrl(reg)}
+                              alt="QR Code"
+                              className="w-[160px] h-[160px] rounded"
                               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
-                          ) : (
-                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                              <User className="h-5 w-5 text-muted-foreground" />
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {reg.token.substring(0, 10)}...
+                          </TableCell>
+                          <TableCell className="font-medium text-sm">{reg.full_name}</TableCell>
+                          <TableCell className="font-mono text-xs">{reg.document_number}</TableCell>
+                          <TableCell className="text-xs">{formatFullDate(reg.created_at)}</TableCell>
+                          <TableCell className="text-xs">
+                            <span className={reg.is_expired ? 'text-red-500 font-medium' : ''}>
+                              {formatDate(reg.expiry_date)}
+                              {reg.is_expired && ' (Exp.)'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant={reg.validation === 'verified' ? 'secondary' : 'outline'}
+                              className={
+                                reg.validation === 'verified'
+                                  ? 'text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                              }
+                            >
+                              {reg.validation === 'verified' ? 'Verificado' : 'Pendente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 justify-center">
+                              <a
+                                href={`https://qr.atito.com.br/qrvalidation/?token=${reg.token}&ref=${reg.token}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary underline"
+                              >
+                                Visualizar
+                              </a>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setDeleteToken(reg.token)}
+                              >
+                                Excluir
+                              </Button>
                             </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">{reg.full_name}</TableCell>
-                        <TableCell className="font-mono text-xs">{reg.document_number}</TableCell>
-                        <TableCell className="text-xs">{formatDate(reg.birth_date)}</TableCell>
-                        <TableCell className="text-xs">{reg.parent1 || '-'}</TableCell>
-                        <TableCell className="text-xs">{reg.parent2 || '-'}</TableCell>
-                        <TableCell className="text-xs">{formatFullDate(reg.created_at)}</TableCell>
-                        <TableCell className="text-xs">
-                          <span className={reg.is_expired ? 'text-red-500 font-medium' : ''}>
-                            {formatDate(reg.expiry_date)}
-                            {reg.is_expired && ' (Exp.)'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge
-                            variant={reg.validation === 'verified' ? 'secondary' : 'outline'}
-                            className={
-                              reg.validation === 'verified'
-                                ? 'text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                            }
-                          >
-                            {reg.validation === 'verified' ? 'Verificado' : 'Pendente'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <a
-                            href={`https://qr.atito.com.br/qrvalidation/?token=${reg.token}&ref=${reg.token}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary underline"
-                          >
-                            Visualizar
-                          </a>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
 
               {/* Paginação */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-1 py-4 px-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   {getPageNumbers().map((page) => (
@@ -272,12 +366,7 @@ const QRCodeRg6mTodos = () => {
                       {page}
                     </Button>
                   ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
