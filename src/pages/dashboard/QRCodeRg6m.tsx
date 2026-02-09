@@ -22,6 +22,7 @@ import ScrollToTop from '@/components/ui/scroll-to-top';
 
 // URL base do backend PHP
 const PHP_API_BASE = 'https://qr.atito.com.br/qrcode';
+const PHP_VALIDATION_BASE = 'https://qr.atito.com.br/qrvalidation';
 
 interface FormData {
   nome: string;
