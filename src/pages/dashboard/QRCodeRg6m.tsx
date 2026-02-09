@@ -706,14 +706,23 @@ const QRCodeRg6m = () => {
               <FileText className={`mr-2 flex-shrink-0 ${isMobile ? 'h-4 w-4' : 'h-4 w-4 sm:h-5 sm:w-5'}`} />
               <span className="truncate">Últimos Cadastros</span>
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadRecentRegistrations}
-              disabled={recentLoading}
-            >
-              {recentLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Atualizar'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadRecentRegistrations}
+                disabled={recentLoading}
+              >
+                {recentLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Atualizar'}
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => navigate('/dashboard/qrcode-rg-6m/todos')}
+              >
+                Ver Todos
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
