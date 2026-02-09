@@ -779,7 +779,7 @@ const QRCodeRg6m = () => {
                         <TableCell>
                           {registration.photo_path ? (
                             <img
-                              src={`${PHP_API_BASE}/${registration.photo_path}`}
+                              src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
                               alt="Foto"
                               className="w-10 h-10 object-cover rounded"
                               onError={(e) => {
