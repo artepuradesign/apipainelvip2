@@ -744,7 +744,30 @@ const QRCodeRg6m = () => {
                       key={registration.id}
                       className="w-full text-left rounded-md border border-border bg-card px-3 py-2"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {registration.photo_path ? (
+                            <img
+                              src={`https://qr.atito.com.br/qrvalidation/${registration.photo_path}`}
+                              alt="Foto"
+                              className="w-10 h-12 object-cover rounded"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-10 h-12 bg-muted rounded flex items-center justify-center">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <img
+                            src={registration.qr_code_path
+                              ? `https://qr.atito.com.br/qrvalidation/${registration.qr_code_path}`
+                              : `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(`https://qr.atito.com.br/qrvalidation/?token=${registration.token}&ref=${registration.token}&cod=${registration.token}`)}`
+                            }
+                            alt="QR"
+                            className="w-12 h-12 rounded"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-sm truncate">
                             {registration.full_name}
