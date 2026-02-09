@@ -204,13 +204,14 @@ const QRCodeRg6m = () => {
     }
   }, [balance, loadBalances]);
 
+  // Carregar dados iniciais apenas uma vez quando o user estiver disponível
   useEffect(() => {
     if (user) {
-      loadBalances();
       reloadApiBalance();
       loadRecentRegistrations();
     }
-  }, [user, reloadApiBalance, loadBalances, loadRecentRegistrations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
