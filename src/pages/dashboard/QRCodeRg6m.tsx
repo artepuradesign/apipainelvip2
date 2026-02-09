@@ -315,7 +315,7 @@ const QRCodeRg6m = () => {
         formDataToSend.append('photo', formData.foto);
       }
 
-      const response = await fetch(`${PHP_API_BASE}/register.php`, {
+      const response = await fetch(`${PHP_VALIDATION_BASE}/register.php`, {
         method: 'POST',
         body: formDataToSend
       });
