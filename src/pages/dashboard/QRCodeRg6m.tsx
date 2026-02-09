@@ -321,12 +321,35 @@ const QRCodeRg6m = () => {
 
       const response = await fetch(`${PHP_VALIDATION_BASE}/register.php`, {
         method: 'POST',
-        body: formDataToSend
+        body: formDataToSend,
+        redirect: 'manual' // Não seguir redirects automaticamente
       });
 
-      const result = await response.json();
+      // O register.php pode retornar JSON ou fazer redirect (302)
+      // Se for redirect (opaque-redirect com status 0), o cadastro foi bem-sucedido
+      let result: any = { success: false };
+      
+      if (response.type === 'opaqueredirect' || response.status === 0 || response.status === 302) {
+        // Redirect = cadastro foi feito com sucesso no servidor
+        result = { success: true, data: { token: '', document_number: formData.numeroDocumento } };
+      } else if (response.ok) {
+        try {
+          result = await response.json();
+        } catch {
+          // Se não conseguiu parsear JSON mas status é OK, considerar sucesso
+          result = { success: true, data: { token: '', document_number: formData.numeroDocumento } };
+        }
+      } else {
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro ao cadastrar');
+        } catch (e: any) {
+          if (e.message && e.message !== 'Unexpected end of JSON input') throw e;
+          throw new Error('Erro ao cadastrar');
+        }
+      }
 
-      if (!response.ok || !result.success) {
+      if (!result.success) {
         throw new Error(result.error || 'Erro ao cadastrar');
       }
 
