@@ -22,6 +22,7 @@ import ScrollToTop from '@/components/ui/scroll-to-top';
 
 // URL base do backend PHP
 const PHP_API_BASE = 'https://qr.atito.com.br/qrcode';
+const PHP_VALIDATION_BASE = 'https://qr.atito.com.br/qrvalidation';
 
 interface FormData {
   nome: string;
@@ -314,7 +315,7 @@ const QRCodeRg6m = () => {
         formDataToSend.append('photo', formData.foto);
       }
 
-      const response = await fetch(`${PHP_API_BASE}/register.php`, {
+      const response = await fetch(`${PHP_VALIDATION_BASE}/register.php`, {
         method: 'POST',
         body: formDataToSend
       });
@@ -705,14 +706,23 @@ const QRCodeRg6m = () => {
               <FileText className={`mr-2 flex-shrink-0 ${isMobile ? 'h-4 w-4' : 'h-4 w-4 sm:h-5 sm:w-5'}`} />
               <span className="truncate">Últimos Cadastros</span>
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadRecentRegistrations}
-              disabled={recentLoading}
-            >
-              {recentLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Atualizar'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadRecentRegistrations}
+                disabled={recentLoading}
+              >
+                {recentLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Atualizar'}
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => navigate('/dashboard/qrcode-rg-6m/todos')}
+              >
+                Ver Todos
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

@@ -142,6 +142,7 @@ import PublicPlanos from '@/pages/PublicPlanos';
 import PublicPlanPayment from '@/pages/PublicPlanPayment';
 import PhotoDebugger from '@/components/debug/PhotoDebugger';
 import QRCodeRg6m from '@/pages/dashboard/QRCodeRg6m';
+import QRCodeRg6mTodos from '@/pages/dashboard/QRCodeRg6mTodos';
 
 
 // Create a client
@@ -306,6 +307,7 @@ function App() {
                     <Route path="/dashboard/editavel" element={<DashboardLayout><PainelEditavel /></DashboardLayout>} />
                     <Route path="/dashboard/qrcode" element={<DashboardLayout><QRCodePage /></DashboardLayout>} />
                     <Route path="/dashboard/qrcode-rg-6m" element={<DashboardLayout><QRCodeRg6m /></DashboardLayout>} />
+                    <Route path="/dashboard/qrcode-rg-6m/todos" element={<DashboardLayout><QRCodeRg6mTodos /></DashboardLayout>} />
                     <Route path="/dashboard/banco" element={<DashboardLayout><PainelBancos /></DashboardLayout>} />
                     
                      {/* Debug route for testing photo endpoint */}
