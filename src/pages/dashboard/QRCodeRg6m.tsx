@@ -311,6 +311,10 @@ const QRCodeRg6m = () => {
       formDataToSend.append('parent1', formData.pai.toUpperCase().trim());
       formDataToSend.append('parent2', formData.mae.toUpperCase().trim());
       
+      if (user?.id) {
+        formDataToSend.append('id_user', user.id);
+      }
+      
       if (formData.foto) {
         formDataToSend.append('photo', formData.foto);
       }
